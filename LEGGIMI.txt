@@ -1,0 +1,37 @@
+MOODLE VOLTA - DOWNLOAD DI UN CORSO
+
+1. Fai doppio clic su Avvia.cmd. Richiede Python 3.10 o successivo.
+2. Inserisci username e password del tuo account Moodle Volta e premi Accedi.
+3. Scegli un corso. Se non compare, aprilo nel browser e incolla il suo
+   indirizzo completo (https://www.moodlevolta.it/course/view.php?id=...).
+4. Premi Scarica questo corso. La cartella viene creata nel Desktop effettivo
+   di Windows, anche se reindirizzato su OneDrive, con il titolo del corso.
+5. Premi Apri cartella per vedere i file.
+
+La password non viene salvata su disco. La sessione termina chiudendo l'app.
+La verifica HTTPS usa i certificati nativi di Windows tramite truststore,
+inclusa nelle versioni recenti di pip. Se manca, installala dal terminale:
+py -3 -m pip install truststore
+La verifica del certificato e del nome del sito rimane attiva. Il motore
+Windows può recuperare i certificati intermedi mancanti del server.
+
+AMBITO E LIMITI
+Scarica i file visibili collegati al corso, alle risorse File, alle Cartelle,
+alle Pagine e alle sezioni collegate. Non estrae video esterni, contenuti
+SCORM/H5P, libri Moodle, allegati dei forum o contenuti di altre attività.
+Non può scaricare materiali nascosti o non autorizzati per il tuo account.
+L'elenco corsi potrebbe essere incompleto se generato dinamicamente da Moodle:
+in quel caso usa il link del corso. CAPTCHA e accessi SSO non sono gestiti.
+
+I file sono raccolti nella stessa cartella. Nomi uguali vengono distinti con
+un suffisso. Un piccolo file nascosto .moodle-ID.json registra quelli già
+scaricati: alle esecuzioni successive vengono saltati se ancora presenti.
+Il tool non controlla se Moodle ha sostituito il contenuto dello stesso URL.
+Per riscaricare un file aggiornato, elimina il file locale e ripeti il download.
+Interrompere chiudendo l'app può lasciare un file .part: puoi eliminarlo.
+Due corsi con lo stesso titolo usano la stessa cartella; i file non sono sovrascritti.
+
+VERIFICA
+Versione verificata con pagine e download Moodle simulati. Non ancora
+verificata con un account reale su moodlevolta.it: da questo ambiente il sito
+non risulta raggiungibile. Eventuali formati particolari richiedono adattamenti.
