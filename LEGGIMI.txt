@@ -1,23 +1,33 @@
 MOODLE VOLTA - DOWNLOAD DI UN CORSO
 
-1. Fai doppio clic su Avvia.cmd. Richiede Python 3.10 o successivo.
+1. Su macOS scarica MoodleVolta-macOS-AppleSilicon.zip dalla repository,
+   estrailo e apri MoodleVolta.app: non apre Terminale e non richiede Python.
+   La versione pronta è per Apple Silicon.
+   Su Windows fai doppio clic su Avvia.cmd (richiede Python 3.10+ con Tkinter).
+   Per avviare il codice su Mac usa Avvia-Mac.command: apre anche Terminale
+   e richiede Python 3.10+ con Tkinter 8.6+. Puoi installarli con:
+   brew install python@3.12 python-tk@3.12
+   Se il file non si apre, esegui nel Terminale: chmod +x Avvia-Mac.command
 2. Inserisci username e password del tuo account Moodle Volta e premi Accedi.
 3. Scegli un corso. Se non compare, aprilo nel browser e incolla il suo
    indirizzo completo (https://www.moodlevolta.it/course/view.php?id=...).
-4. Premi Scarica questo corso. La cartella viene creata nel Desktop effettivo
-   di Windows, anche se reindirizzato su OneDrive, con il titolo del corso.
+4. Premi Scarica questo corso. La cartella viene creata sul Desktop, con il
+   titolo del corso. Su Windows segue anche il reindirizzamento OneDrive.
 5. Premi Apri cartella per vedere i file.
 
 La password non viene salvata su disco. La sessione termina chiudendo l'app.
-La verifica HTTPS usa i certificati nativi di Windows tramite truststore,
+Su Windows la verifica HTTPS usa i certificati nativi tramite truststore,
 inclusa nelle versioni recenti di pip. Se manca, installala dal terminale:
 py -3 -m pip install truststore
+Su macOS la verifica HTTPS usa i certificati del Python installato.
 La verifica del certificato e del nome del sito rimane attiva. Il motore
 Windows può recuperare i certificati intermedi mancanti del server.
 
 AMBITO E LIMITI
 Scarica i file visibili collegati al corso, alle risorse File, alle Cartelle,
-alle Pagine e alle sezioni collegate. Non estrae video esterni, contenuti
+alle Pagine e alle sezioni collegate. Scarica anche i file delle sottocartelle
+quando Moodle offre l'archivio ZIP della risorsa Cartella. Non estrae video
+esterni, contenuti
 SCORM/H5P, libri Moodle, allegati dei forum o contenuti di altre attività.
 Non può scaricare materiali nascosti o non autorizzati per il tuo account.
 L'elenco corsi potrebbe essere incompleto se generato dinamicamente da Moodle:

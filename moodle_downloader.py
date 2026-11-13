@@ -1,4 +1,4 @@
-"""Download dei file Moodle con verifica HTTPS nativa Windows."""
+"""Download dei file Moodle con verifica HTTPS del sistema operativo."""
 import ctypes
 import hashlib
 import http.cookiejar
@@ -7,6 +7,10 @@ import os
 import queue
 import re
 import ssl
+import shutil
+import subprocess
+import sys
+import tempfile
 import threading
 import urllib.parse as up
 import urllib.request as ur
@@ -15,6 +19,8 @@ from collections import deque
 from email.message import Message
 from html.parser import HTMLParser
 from pathlib import Path
+from pathlib import PurePosixPath
+import zipfile
 import tkinter as tk
 from tkinter import ttk, messagebox
 
@@ -59,9 +65,10 @@ def desktop():
 class Page(HTMLParser):
     def __init__(self, html):
         super().__init__(convert_charrefs=True)
-        self.links, self.inputs, self.headings = [], {}, []
+        self.links, self.inputs, self.headings, self.forms = [], {}, [], []
         self.anchor = None
         self.heading = None
+        self.form = None
         self.feed(html)
 
     def handle_starttag(self, tag, attrs):
@@ -70,6 +77,10 @@ class Page(HTMLParser):
             self.anchor = [a['href'], a.get('title', '')]
         if tag == 'input' and a.get('name'):
             self.inputs[a['name']] = a.get('value', '')
+            if self.form is not None:
+                self.form[2][a['name']] = a.get('value', '')
+        if tag == 'form':
+            self.form = [a.get('action', ''), a.get('method', 'get').lower(), {}]
         if tag == 'h1':
             self.heading = []
         if tag in ('iframe', 'embed', 'object'):
@@ -84,6 +95,9 @@ class Page(HTMLParser):
             self.heading.append(data)
 
     def handle_endtag(self, tag):
+        if tag == 'form' and self.form is not None:
+            self.forms.append(self.form)
+            self.form = None
         if tag == 'a' and self.anchor is not None:
             self.links.append((self.anchor[0], ' '.join(self.anchor[1].split())))
             self.anchor = None
@@ -105,10 +119,11 @@ class Client:
             return self.opener.open(url, data=data, timeout=60)
         except urllib.error.URLError as exc:
             if isinstance(exc.reason, ssl.SSLCertVerificationError):
+                system = 'Windows' if os.name == 'nt' else 'macOS' if sys.platform == 'darwin' else 'sistema'
                 raise RuntimeError(
                     'Il certificato HTTPS non risulta valido neppure usando '
-                    'i certificati attendibili di Windows. Verifica se il sito '
-                    'si apre in Edge senza avvisi e controlla data e ora del PC. '
+                    f'i certificati attendibili di {system}. Verifica se il sito '
+                    'si apre nel browser senza avvisi e controlla data e ora del computer. '
                     'Dettaglio: ' + str(exc.reason)
                 ) from exc
             raise
@@ -166,7 +181,7 @@ class Client:
             manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
         except (OSError, ValueError):
             manifest = {}
-        pending = deque([(course_url, first)])
+        pending = deque([(course_url, first, False)])
         seen = set()
         downloaded = skipped = failed = 0
         errors = []
@@ -177,7 +192,7 @@ class Client:
             tmp.replace(manifest_path)
 
         while pending:
-            url, parsed = pending.popleft()
+            url, parsed, is_archive = pending.popleft()
             url = up.urldefrag(url)[0]
             if url in seen:
                 continue
@@ -187,6 +202,53 @@ class Client:
                     with self.open(url) as r:
                         if '/login/' in r.url:
                             raise RuntimeError('Sessione scaduta: accedi nuovamente.')
+                        if is_archive:
+                            with tempfile.TemporaryFile() as archive_file:
+                                shutil.copyfileobj(r, archive_file)
+                                archive_file.seek(0)
+                                with zipfile.ZipFile(archive_file) as archive:
+                                    for item in archive.infolist():
+                                        path = PurePosixPath(item.filename)
+                                        if (path.is_absolute() or '..' in path.parts or
+                                                '\\' in item.filename or not path.parts or
+                                                (item.external_attr >> 16) & 0o170000 == 0o120000):
+                                            log('Voce ZIP ignorata: ' + item.filename)
+                                            continue
+                                        parts = [safe_name(part) for part in path.parts if part not in ('', '.')]
+                                        if not parts:
+                                            continue
+                                        dest = root.joinpath(*parts)
+                                        if not dest.resolve().is_relative_to(root.resolve()):
+                                            log('Voce ZIP ignorata: ' + item.filename)
+                                            continue
+                                        if item.is_dir():
+                                            dest.mkdir(parents=True, exist_ok=True)
+                                            continue
+                                        key = url + '#' + item.filename
+                                        old = manifest.get(key)
+                                        if old and '..' not in Path(old).parts and (root / old).is_file():
+                                            skipped += 1
+                                            log('Già presente: ' + old)
+                                            continue
+                                        if dest.exists():
+                                            suffix = hashlib.sha256(key.encode()).hexdigest()[:10]
+                                            dest = dest.with_name(safe_name(dest.stem[:110] + '_' + suffix + dest.suffix))
+                                        if dest.exists():
+                                            raise RuntimeError('Nome file già occupato: ' + str(dest.relative_to(root)))
+                                        dest.parent.mkdir(parents=True, exist_ok=True)
+                                        tmp = dest.with_name(dest.name + '.part')
+                                        try:
+                                            with archive.open(item) as source, tmp.open('wb') as out:
+                                                shutil.copyfileobj(source, out)
+                                            tmp.replace(dest)
+                                        finally:
+                                            tmp.unlink(missing_ok=True)
+                                        name = str(dest.relative_to(root))
+                                        manifest[key] = name
+                                        save_manifest()
+                                        downloaded += 1
+                                        log('Scaricato: ' + name)
+                            continue
                         content_type = r.headers.get_content_type()
                         is_file = ('pluginfile.php' in up.urlsplit(r.url).path or
                                    'attachment' in r.headers.get('Content-Disposition', '').lower() or
@@ -225,6 +287,18 @@ class Client:
                             continue
                         parsed = Page(r.read().decode(r.headers.get_content_charset() or 'utf-8', errors='replace'))
                         url = r.url
+                archives = []
+                for action, method, fields in parsed.forms:
+                    target = up.urljoin(url, action)
+                    t = up.urlsplit(target)
+                    if (method == 'get' and t.scheme == 'https' and t.hostname == parts.hostname and
+                            t.path == '/mod/folder/download_folder.php'):
+                        query = up.parse_qs(t.query)
+                        folder_id = query.get('id', [fields.get('id', '')])[0]
+                        if str(folder_id).isdigit():
+                            archives.append(BASE + t.path + '?id=' + str(folder_id))
+                for archive_url in archives:
+                    pending.append((archive_url, None, True))
                 for href, _ in parsed.links:
                     target = up.urljoin(url, href)
                     t = up.urlsplit(target)
@@ -233,15 +307,17 @@ class Client:
                     q = up.parse_qs(t.query)
                     # Segue solo risorse leggibili; non invia form né apre attività di consegna.
                     if 'pluginfile.php' in t.path:
-                        pending.append((target, None))
+                        if archives and '/mod_folder/content/' in t.path:
+                            continue
+                        pending.append((target, None, False))
                     elif re.fullmatch(r'/mod/(resource|folder|page)/view\.php', t.path):
                         mid = q.get('id', [''])[0]
                         if mid.isdigit():
-                            pending.append((BASE + t.path + '?id=' + mid, None))
+                            pending.append((BASE + t.path + '?id=' + mid, None, False))
                     elif t.path == '/course/section.php' and q.get('id', [''])[0].isdigit():
-                        pending.append((BASE + t.path + '?id=' + q['id'][0], None))
+                        pending.append((BASE + t.path + '?id=' + q['id'][0], None, False))
                     elif t.path == '/course/view.php' and q.get('id', [''])[0] == cid and q.get('section', [''])[0].isdigit():
-                        pending.append((course_url + '&section=' + q['section'][0], None))
+                        pending.append((course_url + '&section=' + q['section'][0], None, False))
             except Exception as exc:
                 failed += 1
                 errors.append(str(exc))
@@ -350,7 +426,12 @@ class App(tk.Tk):
 
     def open_folder(self):
         if self.result_folder:
-            os.startfile(str(self.result_folder))
+            if sys.platform == 'darwin':
+                subprocess.Popen(['open', str(self.result_folder)])
+            elif os.name == 'nt':
+                os.startfile(str(self.result_folder))
+            else:
+                subprocess.Popen(['xdg-open', str(self.result_folder)])
 
     def poll(self):
         try:

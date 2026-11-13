@@ -1,6 +1,10 @@
 __pycache__/
 *.py[cod]
 .venv/
+.venv-build/
+.pyinstaller-cache/
+build/
+dist/
 *.part
 .moodle-*.json
 .env
