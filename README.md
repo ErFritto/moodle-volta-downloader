@@ -4,7 +4,7 @@ Una piccola app per Windows e macOS che scarica i file di **un corso Moodle alla
 
 ## Avvio
 
-1. Su macOS scarica [MoodleVolta-macOS-AppleSilicon.zip](MoodleVolta-macOS-AppleSilicon.zip) dalla repository, estrailo e apri **MoodleVolta.app** con un doppio clic. Non serve installare Python. L'app precompilata è per Mac con chip Apple Silicon. Se macOS segnala uno sviluppatore non identificato, usa il menu contestuale **Apri** una volta.
+1. Su macOS scarica [MoodleVolta-macOS-AppleSilicon-v1.2.zip](MoodleVolta-macOS-AppleSilicon-v1.2.zip) dalla repository, estrailo e apri **MoodleVolta.app** con un doppio clic. Non serve installare Python. L'app precompilata è per Mac con chip Apple Silicon. Se macOS segnala uno sviluppatore non identificato, usa il menu contestuale **Apri** una volta. La finestra deve mostrare **Moodle Volta 1.2**.
 2. Su Windows scarica questa repository con **Code → Download ZIP**, estrai la cartella e apri **Avvia.cmd**. Serve Python 3.10 o successivo con Tkinter.
 3. Inserisci username e password di Moodle Volta e premi **Accedi**.
 4. Scegli il corso, oppure incolla il suo link `https://www.moodlevolta.it/course/view.php?id=...`.
@@ -33,11 +33,11 @@ La verifica HTTPS rimane sempre attiva.
 ## Cosa scarica
 
 - File collegati direttamente al corso.
-- Risorse **File**, **Cartella** e **Pagina**, comprese le sezioni collegate. Per le cartelle usa l'archivio ZIP di Moodle quando disponibile, conservando anche i file nelle sottocartelle.
+- Risorse **File**, **Cartella** e **Pagina**, comprese le sezioni collegate. Per le cartelle legge l'albero dei file e, quando disponibile, l'archivio ZIP di Moodle. Conserva la struttura delle sottocartelle.
 - I file già scaricati vengono saltati se ancora presenti; i nomi uguali ricevono un suffisso.
 
 Non gestisce video esterni, libri Moodle, forum, SCORM/H5P, CAPTCHA e SSO. Scarica solo i materiali visibili al tuo account. Se Moodle sostituisce un file mantenendo lo stesso URL, elimina la copia locale per riscaricarlo.
 
-Versione iniziale verificata con pagine e download simulati. La compatibilità completa con Moodle Volta deve ancora essere verificata con un account reale.
+La versione 1.2 è stata verificata con pagine e download simulati, anche per le cartelle senza archivio ZIP. La compatibilità completa con Moodle Volta deve ancora essere verificata con un account reale. Se il registro indica **Cartelle Moodle rilevate: 0**, invia il link di una risorsa Cartella e il registro per adattare il lettore al formato specifico del corso.
 
 Il progetto non è affiliato a Moodle o all’istituto.

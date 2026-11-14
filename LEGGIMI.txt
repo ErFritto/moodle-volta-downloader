@@ -1,8 +1,8 @@
 MOODLE VOLTA - DOWNLOAD DI UN CORSO
 
-1. Su macOS scarica MoodleVolta-macOS-AppleSilicon.zip dalla repository,
+1. Su macOS scarica MoodleVolta-macOS-AppleSilicon-v1.2.zip dalla repository,
    estrailo e apri MoodleVolta.app: non apre Terminale e non richiede Python.
-   La versione pronta è per Apple Silicon.
+   La versione pronta è per Apple Silicon. La finestra deve indicare versione 1.2.
    Su Windows fai doppio clic su Avvia.cmd (richiede Python 3.10+ con Tkinter).
    Per avviare il codice su Mac usa Avvia-Mac.command: apre anche Terminale
    e richiede Python 3.10+ con Tkinter 8.6+. Puoi installarli con:
@@ -26,7 +26,7 @@ Windows può recuperare i certificati intermedi mancanti del server.
 AMBITO E LIMITI
 Scarica i file visibili collegati al corso, alle risorse File, alle Cartelle,
 alle Pagine e alle sezioni collegate. Scarica anche i file delle sottocartelle
-quando Moodle offre l'archivio ZIP della risorsa Cartella. Non estrae video
+leggendo l'albero dei file o l'archivio ZIP della risorsa Cartella. Non estrae video
 esterni, contenuti
 SCORM/H5P, libri Moodle, allegati dei forum o contenuti di altre attività.
 Non può scaricare materiali nascosti o non autorizzati per il tuo account.
